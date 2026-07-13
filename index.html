@@ -52,6 +52,54 @@
     .animate-float {
       animation: floatUp 14s infinite linear;
     }
+
+    @keyframes barberRainbowSlide {
+      0% { transform: translateX(-18%) skewX(-12deg); }
+      100% { transform: translateX(18%) skewX(-12deg); }
+    }
+
+    main section.p-6.rounded-xl.border {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    main section.p-6.rounded-xl.border::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -60%;
+      width: 220%;
+      height: 100%;
+      background: linear-gradient(
+        120deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 171, 171, 0.55) 12%,
+        rgba(255, 213, 166, 0.55) 24%,
+        rgba(255, 247, 179, 0.55) 36%,
+        rgba(195, 232, 196, 0.55) 48%,
+        rgba(187, 222, 251, 0.55) 60%,
+        rgba(209, 196, 233, 0.55) 72%,
+        rgba(248, 187, 208, 0.55) 84%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      opacity: 0;
+      transform: translateX(-18%) skewX(-12deg);
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    main section.p-6.rounded-xl.border:hover::before,
+    main section.p-6.rounded-xl.border:focus-within::before {
+      opacity: 1;
+      animation: barberRainbowSlide 1.4s linear infinite alternate;
+    }
+
+    main section.p-6.rounded-xl.border > * {
+      position: relative;
+      z-index: 1;
+    }
   </style>
 </head>
 <body class="min-h-[1200px] relative overflow-x-hidden select-none">
