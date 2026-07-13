@@ -158,6 +158,15 @@
             }
         }
 
+        @keyframes barberRainbowSlide {
+            0% {
+                transform: translateX(-18%) skewX(-12deg);
+            }
+            100% {
+                transform: translateX(18%) skewX(-12deg);
+            }
+        }
+
         /* Distinct Sections */
         section {
             background: var(--card-bg);
@@ -167,6 +176,8 @@
             box-shadow: var(--shadow);
             border: 1px solid rgba(13, 148, 136, 0.08);
             position: relative;
+            overflow: hidden;
+            isolation: isolate;
             transition: box-shadow 0.2s ease, transform 0.2s ease;
         }
 
@@ -185,6 +196,44 @@
             width: 5px;
             background-color: var(--mint-primary);
             border-radius: 0 4px 4px 0;
+            z-index: 2;
+        }
+
+        section::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -60%;
+            width: 220%;
+            height: 100%;
+            background: linear-gradient(
+                120deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 171, 171, 0.55) 12%,
+                rgba(255, 213, 166, 0.55) 24%,
+                rgba(255, 247, 179, 0.55) 36%,
+                rgba(195, 232, 196, 0.55) 48%,
+                rgba(187, 222, 251, 0.55) 60%,
+                rgba(209, 196, 233, 0.55) 72%,
+                rgba(248, 187, 208, 0.55) 84%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            opacity: 0;
+            transform: translateX(-18%) skewX(-12deg);
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        section:hover::after,
+        section:focus-within::after {
+            opacity: 1;
+            animation: barberRainbowSlide 1.4s linear infinite alternate;
+        }
+
+        section > * {
+            position: relative;
+            z-index: 1;
         }
 
         h2 {

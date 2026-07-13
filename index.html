@@ -100,6 +100,40 @@
       position: relative;
       z-index: 1;
     }
+
+    .dot-word {
+      --dot-size: 6px;
+      --dot-gap: 4px;
+      display: flex;
+      gap: calc(var(--dot-gap) * 4);
+      flex-wrap: wrap;
+      margin: 0 0 1.25rem 0;
+      align-items: flex-start;
+    }
+
+    .dot-letter {
+      position: relative;
+      width: calc(6 * var(--dot-size) + 5 * var(--dot-gap));
+      height: calc(8 * var(--dot-size) + 7 * var(--dot-gap));
+    }
+
+    .dot {
+      position: absolute;
+      width: var(--dot-size);
+      height: var(--dot-size);
+      border-radius: 999px;
+      background: var(--accent-color);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-color) 45%, transparent);
+      will-change: transform;
+    }
+
+    @media (max-width: 640px) {
+      .dot-word {
+        --dot-size: 5px;
+        --dot-gap: 3px;
+        gap: calc(var(--dot-gap) * 3.5);
+      }
+    }
   </style>
 </head>
 <body class="min-h-[1200px] relative overflow-x-hidden select-none">
@@ -135,7 +169,8 @@
   <!-- Main Content -->
   <main class="max-w-3xl mx-auto mt-32 px-5 py-12">
     <span class="inline-block bg-accent/10 text-accent border border-accent/20 px-3 py-1 rounded-full text-xs font-bold mb-4" data-ko="SSAFY 1학기 조기 취업 목표" data-en="Goal: Early Employment within SSAFY 1st Semester">SSAFY 1학기 조기 취업 목표</span>
-    <h1 id="mainTitle" class="text-4xl font-extrabold mb-4" data-ko="정인호 (StampHo)" data-en="In-ho Jung (StampHo)">정인호 (StampHo)</h1>
+    <h1 id="mainTitle" class="text-4xl font-extrabold mb-4" data-ko="정인호" data-en="In-ho Jung">정인호</h1>
+    <div id="dotWord" class="dot-word" aria-label="STAMPHO dot logo"></div>
     <p class="text-base leading-relaxed opacity-80 mb-12" data-ko="탄탄한 프론트엔드 기반 위에 풀스택 역량을 채워가는 개발자입니다." data-en="A developer expanding full-stack capabilities upon a solid front-end foundation.">
       탄탄한 프론트엔드 기반 위에 풀스택 역량을 채워가는 개발자입니다.
     </p>
@@ -232,6 +267,83 @@
 
     const cursor = document.getElementById('customCursor');
     const particleContainer = document.getElementById('particleContainer');
+    const dotWord = document.getElementById('dotWord');
+    const dotFont = {
+      S: ['0111110', '1100011', '1100000', '0111100', '0000110', '0000011', '1100011', '0111110', '0000000'],
+      T: ['1111111', '0011000', '0011000', '0011000', '0011000', '0011000', '0011000', '0011000', '0000000'],
+      A: ['0011100', '0110110', '1100011', '1100011', '1111111', '1100011', '1100011', '1100011', '0000000'],
+      M: ['1100011', '1110111', '1111111', '1101011', '1100011', '1100011', '1100011', '1100011', '0000000'],
+      P: ['1111110', '1100011', '1100011', '1111110', '1100000', '1100000', '1100000', '1100000', '0000000'],
+      H: ['1100011', '1100011', '1100011', '1111111', '1100011', '1100011', '1100011', '1100011', '0000000'],
+      O: ['0011100', '0110110', '1100011', '1100011', '1100011', '1100011', '0110110', '0011100', '0000000'],
+      ' ': ['0000000', '0000000', '0000000', '0000000', '0000000', '0000000', '0000000', '0000000', '0000000'],
+    };
+    let dotParticles = [];
+
+    function initDotParticles() {
+      dotParticles = Array.from(document.querySelectorAll('.dot-word .dot')).map((el) => ({
+        el,
+        ox: Number.parseFloat(el.style.left || '0'),
+        oy: Number.parseFloat(el.style.top || '0'),
+        radius: el.offsetWidth / 2,
+        tx: 0,
+        ty: 0,
+        vx: 0,
+        vy: 0,
+      }));
+    }
+
+    function buildDotWord(text) {
+      if (!dotWord) return;
+      const style = getComputedStyle(dotWord);
+      const dotSize = Number.parseFloat(style.getPropertyValue('--dot-size')) || 8;
+      const dotGap = Number.parseFloat(style.getPropertyValue('--dot-gap')) || 6;
+      const strokeThickness = 1;
+      const step = dotSize + dotGap;
+      const fragment = document.createDocumentFragment();
+
+      dotWord.innerHTML = '';
+      text.toUpperCase().split('').forEach((char) => {
+        const map = dotFont[char] || dotFont[' '];
+        const letter = document.createElement('div');
+        letter.className = 'dot-letter';
+        letter.setAttribute('aria-hidden', 'true');
+
+        const thickPixels = new Set();
+        map.forEach((row, y) => {
+          for (let x = 0; x < row.length; x += 1) {
+            if (row[x] !== '1') continue;
+            for (let oy = 0; oy < strokeThickness; oy += 1) {
+              for (let ox = 0; ox < strokeThickness; ox += 1) {
+                thickPixels.add(`${x + ox},${y + oy}`);
+              }
+            }
+          }
+        });
+
+        const cols = (map[0]?.length || 5) + strokeThickness - 1;
+        const rows = map.length + strokeThickness - 1;
+        letter.style.width = `${cols * dotSize + (cols - 1) * dotGap}px`;
+        letter.style.height = `${rows * dotSize + (rows - 1) * dotGap}px`;
+
+        thickPixels.forEach((coord) => {
+          const [cx, cy] = coord.split(',').map(Number);
+          const dot = document.createElement('span');
+          dot.className = 'dot';
+          dot.style.left = `${cx * step}px`;
+          dot.style.top = `${cy * step}px`;
+          letter.appendChild(dot);
+        });
+
+        fragment.appendChild(letter);
+      });
+
+      dotWord.appendChild(fragment);
+      initDotParticles();
+    }
+
+    buildDotWord('STAMPHO');
+    window.addEventListener('resize', () => buildDotWord('STAMPHO'));
     let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
     let activeParticles = [], collectedParticles = [];
     const maxTail = 5;
@@ -265,6 +377,60 @@
     for (let i = 0; i < 25; i++) { spawnParticle(); }
     let tailPositions = Array(maxTail).fill({x: mouseX, y: mouseY});
 
+    function applyRepelForce(state, px, py, radius, power, dotRadius) {
+      const parentRect = state.el.parentElement.getBoundingClientRect();
+      const cx = parentRect.left + state.ox + dotRadius + state.tx;
+      const cy = parentRect.top + state.oy + dotRadius + state.ty;
+      const dx = cx - px;
+      const dy = cy - py;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= 0.001 || dist >= radius) return {fx: 0, fy: 0};
+      const force = (1 - dist / radius) * power;
+      return {fx: (dx / dist) * force, fy: (dy / dist) * force};
+    }
+
+    function updateDotRepelMotion() {
+      if (!dotParticles.length) return;
+      dotParticles.forEach((state) => {
+        let fx = 0;
+        let fy = 0;
+
+        const cursorForce = applyRepelForce(state, mouseX, mouseY, 120, 8.5, state.radius);
+        fx += cursorForce.fx;
+        fy += cursorForce.fy;
+
+        for (let i = 0; i < collectedParticles.length; i++) {
+          const tail = tailPositions[i];
+          if (!tail) continue;
+          const tailForce = applyRepelForce(state, tail.x, tail.y, 88, 5.8, state.radius);
+          fx += tailForce.fx;
+          fy += tailForce.fy;
+        }
+
+        fx += -state.tx * 0.12;
+        fy += -state.ty * 0.12;
+
+        state.vx = (state.vx + fx) * 0.82;
+        state.vy = (state.vy + fy) * 0.82;
+        state.tx += state.vx;
+        state.ty += state.vy;
+
+        const maxOffset = 24;
+        const offsetMag = Math.hypot(state.tx, state.ty);
+        if (offsetMag > maxOffset) {
+          const ratio = maxOffset / offsetMag;
+          state.tx *= ratio;
+          state.ty *= ratio;
+        }
+
+        if (Math.abs(state.tx) < 0.01 && Math.abs(state.ty) < 0.01 && Math.abs(state.vx) < 0.01 && Math.abs(state.vy) < 0.01) {
+          state.tx = 0; state.ty = 0; state.vx = 0; state.vy = 0;
+        }
+
+        state.el.style.transform = `translate(${state.tx}px, ${state.ty}px)`;
+      });
+    }
+
     function physicsLoop() {
       activeParticles.forEach(p => {
         if (p.isCollected) return;
@@ -287,6 +453,7 @@
         part.element.style.position = 'fixed'; part.element.style.width = `${part.size}px`; part.element.style.height = `${part.size}px`; part.element.style.left = `${nx}px`; part.element.style.top = `${ny}px`; part.element.style.transform = `translate(-50%, -50%)`;
         targetX = nx; targetY = ny;
       });
+      updateDotRepelMotion();
       requestAnimationFrame(physicsLoop);
     }
     requestAnimationFrame(physicsLoop);
